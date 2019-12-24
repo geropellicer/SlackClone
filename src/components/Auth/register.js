@@ -10,6 +10,10 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
 
+    const [errorMessages, setErrorMessages] = useState([]);
+    const [successMessages, setSuccessMessages] = useState([]);
+
+
     const updateUsername = (e) => {
         setUsername(e.target.value);
     };
@@ -23,7 +27,6 @@ const Register = () => {
         setPasswordConfirmation(e.target.value);
     };
 
-    const [errorMessages, setErrorMessages] = useState([]);
 
     const formIsValid = () => {
         // To start validation we clear previous error msgs to avoid repetition
@@ -73,12 +76,18 @@ const Register = () => {
             hasLetter = true;
         }
 
-        console.log("Has letter: " + hasLetter + " - Has number: " + hasNumber);
-
         if(password.length >= 8 && hasNumber && hasLetter){
             return true;
         }
         return false;
+    };
+
+    const emptyForm = () => {
+        setUsername('');
+        setEmail('');
+        setPassword('');
+        setPasswordConfirmation('');
+        setErrorMessages([]); 
     };
 
     const registrarUsuario = (e) => {
@@ -88,9 +97,14 @@ const Register = () => {
             .createUserWithEmailAndPassword(email, password)
             .then(createdUser => {
                 console.log(createdUser);
+                const newSuccess = 'User created succesfully. You can now log in';
+                setSuccessMessages(prevSuccess => [...prevSuccess, newSuccess]);
+                emptyForm();
             })
             .catch(err => {
                 console.log(err);
+                const newError = err.message;
+                setErrorMessages(prevErrors => [...prevErrors, newError]);
             })
         }
     };
@@ -120,6 +134,25 @@ const Register = () => {
 
                     </Segment>  
                 </Form>
+                { errorMessages.length > 0 && (
+                <Message error>
+                    <h3>Error:</h3>
+                { errorMessages.map( element => { 
+                    return(<p key={element}> {element} </p>); 
+                    })
+                }
+                </Message>
+                )}
+
+                { successMessages.length > 0 && (
+                <Message success>
+                    <h3>Success!</h3>
+                    { successMessages.map( element => { 
+                        return(<p key={element}> {element} </p>); 
+                        })
+                    }
+                </Message>
+                )}
                 <Message>Already a user? <Link to="/login">log in.</Link></Message>
             </Grid.Column>
         </Grid>
