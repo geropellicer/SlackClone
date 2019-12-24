@@ -2,6 +2,7 @@ import React,{useState} from 'react';
 import { Grid, Form, Segment, Button, Header, Message, Icon } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import firebase from '../../firebase';
+import Spinner from '../spinner';
 
 const Register = () => {
 
@@ -12,6 +13,8 @@ const Register = () => {
 
     const [errorMessages, setErrorMessages] = useState([]);
     const [successMessages, setSuccessMessages] = useState([]);
+
+    const [processingForm, setProcessingForm] = useState(false);
 
 
     const updateUsername = (e) => {
@@ -92,7 +95,9 @@ const Register = () => {
 
     const registrarUsuario = (e) => {
         e.preventDefault();
-        if(formIsValid()){
+        if(formIsValid() && !processingForm){
+            showSpinner();
+            setProcessingForm(true);
             firebase.auth()
             .createUserWithEmailAndPassword(email, password)
             .then(createdUser => {
@@ -100,16 +105,29 @@ const Register = () => {
                 const newSuccess = 'User created succesfully. You can now log in';
                 setSuccessMessages(prevSuccess => [...prevSuccess, newSuccess]);
                 emptyForm();
+                hideSpinner();
+                setProcessingForm(false);
             })
             .catch(err => {
                 console.log(err);
                 const newError = err.message;
                 setErrorMessages(prevErrors => [...prevErrors, newError]);
+                hideSpinner();
+                setProcessingForm(false);
             })
         }
     };
 
+    const showSpinner = () => {
+        document.getElementById("spinnerContainer").classList.add('show');
+    };
+
+    const hideSpinner = () => {
+        document.getElementById("spinnerContainer").classList.remove('show');
+    }
+
     return(
+        <div>
         <Grid textAlign="center" verticalAlign="middle" className="app">
             <Grid.Column style={{  maxWidth: 450 }}>
                 <Header as="h2" icon color="orange" textAlign="center">
@@ -156,6 +174,8 @@ const Register = () => {
                 <Message>Already a user? <Link to="/login">log in.</Link></Message>
             </Grid.Column>
         </Grid>
+        <Spinner/>
+        </div>
     )
 }
 
