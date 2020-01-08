@@ -174,7 +174,7 @@ const Register = () => {
   };
 
   const exitWithSuccess = msg => {
-    etSuccessMessage(msg);
+    setSuccessMessage(msg);
     emptyForm();
     stopLoading();
   }
