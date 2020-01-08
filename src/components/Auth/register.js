@@ -143,21 +143,15 @@ const Register = () => {
                   emptyForm();
                   stopLoading();
               }).catch( err => {
-                console.log(err);
-                concatenateError(err.message);
-                stopLoading();
+                exitWithError(err);
               });
             })
             .catch(err => {
-              console.log(err);
-              concatenateError(err.message);
-              stopLoading();
+                exitWithError(err);
             });
         })
         .catch(err => {
-          console.log(err);
-          concatenateError(err.message);
-          stopLoading();
+            exitWithError(err);
         });
     }
   };
@@ -176,6 +170,12 @@ const Register = () => {
           avatar: createdUser.user.photoURL
       });
   }
+
+  const exitWithError = err => {
+    console.log(err);
+    concatenateError(err.message);
+    stopLoading();
+  };
 
   return (
     <div>
@@ -284,7 +284,7 @@ const Register = () => {
             </Message>
           )}
           <Message>
-            Already a user? <Link to="/login">log in.</Link>
+            Already a user? <Link to="/login">Log in.</Link>
           </Message>
         </Grid.Column>
       </Grid>
