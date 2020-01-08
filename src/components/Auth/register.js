@@ -137,11 +137,7 @@ const Register = () => {
             })
             .then(() => {
               saveUser(createdUser).then( () => {
-                  setSuccessMessage(
-                    "User created succesfully. You can now log in."
-                  );
-                  emptyForm();
-                  stopLoading();
+                  exitWithSuccess("User created succesfully. You can now log in.");
               }).catch( err => {
                 exitWithError(err);
               });
@@ -176,6 +172,12 @@ const Register = () => {
     concatenateError(err.message);
     stopLoading();
   };
+
+  const exitWithSuccess = msg => {
+    etSuccessMessage(msg);
+    emptyForm();
+    stopLoading();
+  }
 
   return (
     <div>
