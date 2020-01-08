@@ -9,8 +9,7 @@ import firebase from "./firebase";
 import "semantic-ui-css/semantic.min.css";
 
 import { createStore } from "redux";
-import { Provider } from "react-redux";
-
+import { Provider, useDispatch} from "react-redux";
 import {
   BrowserRouter as Router,
   Switch,
@@ -19,6 +18,7 @@ import {
 } from "react-router-dom";
 
 import allReducers from "./redux/reducers/combine";
+import {setUser} from './redux/actions';
 
 
 const store = createStore(
@@ -28,13 +28,15 @@ const store = createStore(
 
 const Root = () => {
   const history = useHistory();
+  const dispatch = useDispatch();
   useEffect(() => {
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
+        dispatch(setUser(user));
         return history.push("/");
       }
     });
-  }, [history]);
+  }, [history, dispatch]);
 
   return (
     <Switch>
