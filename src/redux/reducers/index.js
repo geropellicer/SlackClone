@@ -21,3 +21,20 @@ export const userReducer = (state = initialUserState, action) => {
             return state;
     }
 }
+
+
+const initialChannelState = {
+    currentChannel: null
+}
+
+export const channelsReducer = (state = initialChannelState, action) => {
+    switch (action.type) {
+        case aTypes.SET_CURRENT_CHANNEL:
+            return {
+                ...state,
+                currentChannel: action.payload.currentChannel
+            }    
+        default:
+            return state;
+    }
+}

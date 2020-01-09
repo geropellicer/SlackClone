@@ -14,3 +14,12 @@ export const clearUser = user => {
         type: aTypes.CLEAR_USER,
     }
 }
+
+export const setCurrentChannel= channel => {
+    return {
+        type: aTypes.SET_CURRENT_CHANNEL,
+        payload: {
+            currentChannel: channel
+        }
+    }
+}
