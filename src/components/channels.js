@@ -1,25 +1,27 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { Menu, Icon, Modal, Form, Input, Button } from "semantic-ui-react";
-import firebase from '../firebase';
+import firebase from "../firebase";
 import { useSelector, useDispatch } from "react-redux";
-import {setCurrentChannel} from '../redux/actions'
+import { setCurrentChannel } from "../redux/actions";
 
 const Channels = () => {
   const [channels, setChannels] = useState([]);
   const [modal, setModal] = useState(false);
+  const [firstLoad, setFirstLoad] = useState(true);
 
-  const [channelName, setChannelName] = useState('');
-  const [channelDescription, setchannelDescription] = useState('');
+  const [channelName, setChannelName] = useState("");
+  const [channelDescription, setchannelDescription] = useState("");
 
-  const [channelsRef] = useState(firebase.database().ref('channels'));
+  const [channelsRef] = useState(firebase.database().ref("channels"));
 
   const userInfo = useSelector(state => state.user.currentUser);
+  const selectedChannel = useSelector(state => state.channels.currentChannel);
 
   const dispatch = useDispatch();
 
   const emptyForm = () => {
-      setChannelName('');
-      setchannelDescription('');
+    setChannelName("");
+    setchannelDescription("");
   };
 
   const closeModal = () => {
@@ -32,76 +34,93 @@ const Channels = () => {
   };
 
   const updateChannelName = e => {
-      setChannelName(e.target.value);
-  }
+    setChannelName(e.target.value);
+  };
 
   const updateChannelAbout = e => {
-      setchannelDescription(e.target.value);
-  }
+    setchannelDescription(e.target.value);
+  };
 
   const formIsValid = () => {
-      if(channelName && channelDescription){
-          return true;
-      } else {
-          return false;
-      }
-  }
+    if (channelName && channelDescription) {
+      return true;
+    } else {
+      return false;
+    }
+  };
 
   const addChannel = () => {
     const key = channelsRef.push().key;
 
     const newChannel = {
-        id: key,
-        name: channelName,
-        description: channelDescription,
-        createdBy: {
-            name: userInfo.displayName,
-            avatar: userInfo.photoURL
-        }
+      id: key,
+      name: channelName,
+      description: channelDescription,
+      createdBy: {
+        name: userInfo.displayName,
+        avatar: userInfo.photoURL
+      }
     };
 
-    channelsRef.child(key)
-    .update(newChannel)
-    .then(() => {
+    channelsRef
+      .child(key)
+      .update(newChannel)
+      .then(() => {
         closeModal();
-    })
-    .catch(err => {
+      })
+      .catch(err => {
         console.log(err);
-    })
-  }
+      });
+  };
 
-  const createChannel = (e) => {
+  const createChannel = e => {
     e.preventDefault();
-    if(formIsValid()){
-        addChannel();
+    if (formIsValid()) {
+      addChannel();
     } else {
-        return false;
+      return false;
     }
   };
 
-  const displayChannels = channels => (
-      channels.length > 0 && channels.map( channel => (
+  const displayChannels = channels =>
+    channels.length > 0 &&
+    channels.map(channel => (
       <Menu.Item
         key={channel.id}
         onClick={() => dispatch(setCurrentChannel(channel))}
         name={channel.name}
-        style={{opacity: 0.7}}
+        style={{ opacity: 0.7 }}
+        active={selectedChannel && channel.id === selectedChannel.id}
       >
-      # {channel.name}
+        # {channel.name}
       </Menu.Item>
-      ))
-  );
-
+    ));
 
   useEffect(() => {
-    const addListeners = () => {
-        channelsRef.on('child_added', snap => {
-            setChannels(prevChannels => [...prevChannels, snap.val()]);
-        })
-    }
+    const addListeners = async () => {
+      await channelsRef.on("child_added", snap => {
+        setChannels(prevChannels => [...prevChannels, snap.val()]);
+      });
+      console.log(channels.length);
+    };
 
     addListeners();
+    console.log(selectedChannel);
+    return () => {
+      channelsRef.off();
+    };
   }, [channelsRef]);
+
+  useEffect(() => {
+    const setFirstChannel = () => {
+      if (channels.length > 0 && firstLoad) {
+        const firstChannel = channels[0];
+        dispatch(setCurrentChannel(firstChannel));
+        setFirstLoad(false);
+      }
+    };
+    setFirstChannel();
+  }, [channels, dispatch, firstLoad]);
 
   return (
     <React.Fragment>
@@ -110,7 +129,8 @@ const Channels = () => {
           <span>
             <Icon name="exchange" /> CHANNELS
           </span>{" "}
-          ({channels.length}) <Icon name="add" onClick={openModal} style={{cursor: 'pointer'}} />
+          ({channels.length}){" "}
+          <Icon name="add" onClick={openModal} style={{ cursor: "pointer" }} />
         </Menu.Item>
         {displayChannels(channels)}
       </Menu.Menu>
