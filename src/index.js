@@ -20,8 +20,7 @@ import {
 import allReducers from "./redux/reducers/combine";
 import {setUser} from './redux/actions';
 
-import Spinner from './components/spinner';
-
+import SpinnerTotal from './components/spinnerTotal';
 
 const store = createStore(
   allReducers,
@@ -32,7 +31,7 @@ const store = createStore(
 const Root = () => {
   const history = useHistory();
   const dispatch = useDispatch();
-  const isLoadingUser = useState(useSelector(state => state.user.isLoadingUser));
+  const isLoadingUser = useSelector(state => state.user.isLoadingUser);
   useEffect(() => {
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
@@ -42,13 +41,16 @@ const Root = () => {
     });
   }, [history, dispatch]);
 
-  return isLoadingUser ? (
-    <Switch>
+  if(isLoadingUser) {
+    return(<SpinnerTotal/>);
+  } else {
+    return(<Switch>
       <Route path="/" exact component={App} />
       <Route path="/login" exact component={Login} />
       <Route path="/register" exact component={Register} />
-    </Switch>
-  ) : <Spinner/>;
+      <Route path="/spinner" exact component={SpinnerTotal} />
+    </Switch>);
+  }
 };
 
 ReactDOM.render(
