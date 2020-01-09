@@ -19,7 +19,7 @@ const Register = () => {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
-  const [usersRef, setUsersRef] = useState(firebase.database().ref('users'));
+  const usersRef = useState(firebase.database().ref('users'));
 
   const [errorMessages, setErrorMessages] = useState([]);
   const [successMessage, setSuccessMessage] = useState("");
