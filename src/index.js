@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect} from "react";
 import ReactDOM from "react-dom";
 import App from "./components/App";
 import registerServiceWorker from "./registerServiceWorker";
@@ -18,7 +18,7 @@ import {
 } from "react-router-dom";
 
 import allReducers from "./redux/reducers/combine";
-import {setUser} from './redux/actions';
+import {setUser, clearUser} from './redux/actions';
 
 import SpinnerTotal from './components/spinnerTotal';
 
@@ -37,6 +37,9 @@ const Root = () => {
       if (user) {
         dispatch(setUser(user));
         return history.push("/");
+      } else {
+        dispatch(clearUser());
+        return history.push("/login");
       }
     });
   }, [history, dispatch]);
