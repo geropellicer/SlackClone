@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from "react";
 import { Menu, Icon, Modal, Form, Input, Button } from "semantic-ui-react";
 import firebase from '../firebase';
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import {setCurrentChannel} from '../redux/actions'
 
 const Channels = () => {
   const [channels, setChannels] = useState([]);
@@ -13,6 +14,8 @@ const Channels = () => {
   const [channelsRef] = useState(firebase.database().ref('channels'));
 
   const userInfo = useSelector(state => state.user.currentUser);
+
+  const dispatch = useDispatch();
 
   const emptyForm = () => {
       setChannelName('');
@@ -80,7 +83,7 @@ const Channels = () => {
       channels.length > 0 && channels.map( channel => (
       <Menu.Item
         key={channel.id}
-        onClick={() => console.log(channel)}
+        onClick={() => dispatch(setCurrentChannel(channel))}
         name={channel.name}
         style={{opacity: 0.7}}
       >
@@ -92,15 +95,13 @@ const Channels = () => {
 
   useEffect(() => {
     const addListeners = () => {
-        let loadedChannels = [];
         channelsRef.on('child_added', snap => {
-            loadedChannels.push(snap.val());
-            setChannels(loadedChannels);
+            setChannels(prevChannels => [...prevChannels, snap.val()]);
         })
     }
 
     addListeners();
-  }, []);
+  }, [channelsRef]);
 
   return (
     <React.Fragment>
