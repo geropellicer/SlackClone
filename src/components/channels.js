@@ -101,11 +101,9 @@ const Channels = () => {
       await channelsRef.on("child_added", snap => {
         setChannels(prevChannels => [...prevChannels, snap.val()]);
       });
-      console.log(channels.length);
     };
 
     addListeners();
-    console.log(selectedChannel);
     return () => {
       channelsRef.off();
     };
