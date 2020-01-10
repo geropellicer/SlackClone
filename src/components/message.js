@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Comment } from "semantic-ui-react";
 import moment from "moment";
 
@@ -8,11 +8,6 @@ const Message = ({message, user}) => {
   };
 
   const timeFromNow = timestamp => moment(timestamp).fromNow();
-
-  useEffect(() => {
-    console.log(message);
-    console.log(user);
-  }, []);
 
   return (
     <Comment>
