@@ -22,7 +22,9 @@ body,
     right: 1em;
     z-index: 200;
 }
-
+.ui.comments{
+    max-width: 800px !important;
+}
 
 /* Message */
 .message__self {
