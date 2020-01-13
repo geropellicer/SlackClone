@@ -1,32 +1,68 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Segment, Button, Input } from "semantic-ui-react";
 import { useSelector } from "react-redux";
 import firebase from "../firebase";
+import UploadFileModal from "./uploadFileModal";
+import uuidv4 from "uuid/v4";
 
 const MessageForm = () => {
   const [messagesRef] = useState(firebase.database().ref("messages"));
+  const [storageRef] = useState(firebase.storage().ref());
 
   const [messageText, setMessageText] = useState("");
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
   const activeChannel = useSelector(state => state.channels.currentChannel);
-  const userInfo = useSelector(state => state.user.currentUser);
+  const [userInfo] = useState(useSelector(state => state.user.currentUser));
+
+  const [uploadTask, setUploadTask] = useState(null);
+  const [uploadState, setUploadState] = useState("");
+  const [percentUploaded, setPercentUploaded] = useState(0);
+
+  const [modal, setModal] = useState(false);
+
+  const openModal = () => {
+    setModal(true);
+  };
+
+  const closeModal = () => {
+    setModal(false);
+  };
 
   const updateMessageText = e => {
     setMessageText(e.target.value);
   };
 
-  const createMessage = () => {
+  const createMessage = (fileeUrl = null) => {
     const message = {
       timestamp: firebase.database.ServerValue.TIMESTAMP,
-      content: messageText,
       user: {
         id: userInfo.uid,
         name: userInfo.displayName,
         avatar: userInfo.photoURL
       }
     };
+
+    if (fileeUrl) {
+      message["image"] = fileeUrl;
+    } else {
+      message["content"] = messageText;
+    }
     return message;
+  };
+
+  const sendFileMessage = (fileeUrl, ref, pathToUpload) => {
+    ref
+      .child(pathToUpload)
+      .push()
+      .set(createMessage(fileeUrl))
+      .then(() => {
+        setUploadState("done");
+      })
+      .catch(error => {
+        console.log(error);
+        setErrors(prevErrors => [...prevErrors, error]);
+      });
   };
 
   const sendMessage = () => {
@@ -44,18 +80,100 @@ const MessageForm = () => {
         .catch(err => {
           setLoading(false);
         });
-    } else if(!messageText) {
+    } else if (!messageText) {
       setErrors(prevErrors => [...prevErrors, { message: "Add a message" }]);
       console.log(errors);
-    } else if(!userInfo){
-      setErrors(prevErrors => [...prevErrors, { message: "Couldn't retrieve current user info. Please refresh or logout and login again." }]);
+    } else if (!userInfo) {
+      setErrors(prevErrors => [
+        ...prevErrors,
+        {
+          message:
+            "Couldn't retrieve current user info. Please refresh or logout and login again."
+        }
+      ]);
       console.log(errors);
-    } else if(!activeChannel){
-      setErrors(prevErrors => [...prevErrors, { message: "Couldn't retrieve current channel info." }]);
+    } else if (!activeChannel) {
+      setErrors(prevErrors => [
+        ...prevErrors,
+        { message: "Couldn't retrieve current channel info." }
+      ]);
       console.log(errors);
-
     }
   };
+
+  const uploadFile = async (file, metadata) => {
+    const filePath = `chat/public/${uuidv4()}.jpg`;
+
+    try {
+      setUploadState("uploading");
+      setUploadTask(storageRef.child(filePath).put(file, metadata));
+    } catch (error) {
+      console.log(error);
+      setErrors(prevErrors => [...prevErrors, error]);
+      setUploadState("error");
+      setUploadTask(null);
+    }
+  };
+
+  useEffect(() => {
+    const ref = messagesRef;
+
+    if (uploadTask !== null && uploadState === "uploading") {
+      try {
+        console.log(uploadTask);
+        uploadTask.on(
+          "state_changed",
+          snap => {
+            setPercentUploaded(
+              Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
+            );
+          },
+          error => {
+            console.log(error);
+          },
+          () => {
+            uploadTask.snapshot.ref
+              .getDownloadURL()
+              .then(downloadurl => {
+                sendFileMessage(downloadurl, ref, activeChannel.id);
+              })
+              .catch(error => {
+                console.log(error);
+                setErrors(prevErrors => [...prevErrors, error]);
+                setUploadState("error");
+                setUploadTask(null);
+              });
+          }
+        );
+      } catch (error) {
+        console.log(error);
+        setErrors(prevErrors => [...prevErrors, error]);
+        setUploadState("error");
+        setUploadTask(null);
+      }
+    }
+
+    return () => {};
+  }, [uploadTask]);
+
+  /* useEffect(() => {
+    const pathToUpload = activeChannel?.id;
+    const ref = messagesRef;
+
+    if (percentUploaded === 100) {
+      uploadTask.snapshot.ref
+        .getDownloadURL()
+        .then(downloadurl => {
+          sendFileMessage(downloadurl, ref, pathToUpload);
+        })
+        .catch(error => {
+          console.log(error);
+          setErrors(prevErrors => [...prevErrors, error]);
+          setUploadState("error");
+          setUploadTask(null);
+        });
+    }
+  }, [percentUploaded]);*/
 
   return (
     <Segment className="message__form">
@@ -82,11 +200,17 @@ const MessageForm = () => {
           disabled={loading}
         />
         <Button
+          onClick={openModal}
           color="teal"
           content="Upload media"
           labelPosition="right"
           icon="cloud upload"
           disabled={loading}
+        />
+        <UploadFileModal
+          modal={modal}
+          closeModal={closeModal}
+          uploadFile={uploadFile}
         />
       </Button.Group>
     </Segment>
