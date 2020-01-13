@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Modal, Input, Button, Icon } from "semantic-ui-react";
 import mime from "mime-types";
+import ProgressBar from "./porgressBar";
 
-const UploadFileModal = ({ modal, closeModal, uploadFile }) => {
+const UploadFileModal = ({ modal, closeModal, uploadFile, percentUploaded, uploadState }) => {
   const [file, setFile] = useState(null);
   const [authorizedFileFormats] = useState(["image/jpeg", "image/png"]);
 
@@ -26,7 +27,6 @@ const UploadFileModal = ({ modal, closeModal, uploadFile }) => {
       if (isAuthorizedFileType(file.name)) {
         const metadata = { contentType: mime.lookup(file.name) };
         uploadFile(file, metadata);
-        closeModal();
         clearFile();
       }
     }
@@ -43,6 +43,7 @@ const UploadFileModal = ({ modal, closeModal, uploadFile }) => {
           type="file"
           onChange={addFile}
         />
+        {uploadState === "uploading" && <ProgressBar percentUploaded={percentUploaded}/>}
       </Modal.Content>
       <Modal.Actions>
         <Button

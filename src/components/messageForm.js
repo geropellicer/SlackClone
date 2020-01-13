@@ -58,6 +58,7 @@ const MessageForm = () => {
       .set(createMessage(fileeUrl))
       .then(() => {
         setUploadState("done");
+        closeModal();
       })
       .catch(error => {
         console.log(error);
@@ -156,25 +157,6 @@ const MessageForm = () => {
     return () => {};
   }, [uploadTask]);
 
-  /* useEffect(() => {
-    const pathToUpload = activeChannel?.id;
-    const ref = messagesRef;
-
-    if (percentUploaded === 100) {
-      uploadTask.snapshot.ref
-        .getDownloadURL()
-        .then(downloadurl => {
-          sendFileMessage(downloadurl, ref, pathToUpload);
-        })
-        .catch(error => {
-          console.log(error);
-          setErrors(prevErrors => [...prevErrors, error]);
-          setUploadState("error");
-          setUploadTask(null);
-        });
-    }
-  }, [percentUploaded]);*/
-
   return (
     <Segment className="message__form">
       <Input
@@ -211,6 +193,8 @@ const MessageForm = () => {
           modal={modal}
           closeModal={closeModal}
           uploadFile={uploadFile}
+          uploadState={uploadState}
+          percentUploaded={percentUploaded}
         />
       </Button.Group>
     </Segment>
