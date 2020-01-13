@@ -15,13 +15,6 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
 
-  const displayMessages = messages => {
-    messages.length > 0 &&
-      messages.map(message => (
-        <Message key={message.timestamp} message={message} user={userInfo} />
-      ));
-  };
-
   useEffect(() => {
     const addMessageListener = channelId => {
       messagesRef.child(channelId).on("child_added", snap => {
