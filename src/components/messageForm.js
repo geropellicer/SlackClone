@@ -118,10 +118,10 @@ const MessageForm = () => {
 
   useEffect(() => {
     const ref = messagesRef;
+    const channel = activeChannel?.id;
 
     if (uploadTask !== null && uploadState === "uploading") {
       try {
-        console.log(uploadTask);
         uploadTask.on(
           "state_changed",
           snap => {
@@ -136,7 +136,7 @@ const MessageForm = () => {
             uploadTask.snapshot.ref
               .getDownloadURL()
               .then(downloadurl => {
-                sendFileMessage(downloadurl, ref, activeChannel.id);
+                sendFileMessage(downloadurl, ref, channel);
               })
               .catch(error => {
                 console.log(error);
@@ -155,7 +155,7 @@ const MessageForm = () => {
     }
 
     return () => {};
-  }, [uploadTask]);
+  }, [uploadTask, messagesRef, sendFileMessage, uploadState]);
 
   return (
     <Segment className="message__form">
