@@ -127,7 +127,6 @@ const Register = () => {
         .auth()
         .createUserWithEmailAndPassword(email, password)
         .then(createdUser => {
-          console.log(createdUser);
           createdUser.user
             .updateProfile({
               displayName: username,

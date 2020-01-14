@@ -97,7 +97,6 @@ const Login = () => {
         .auth()
         .signInWithEmailAndPassword(email, password)
         .then(signedInUser => {
-          console.log(signedInUser);
           exitWithSuccess(
             `Welcome back ${signedInUser.user.displayName}. You are now logged in.`
           );
