@@ -17,8 +17,27 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
 
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
   const displayChannelName = () => {
     return activeChannel ? activeChannel.name : "";
+  };
+
+  const handleSearchChange = event => {
+    setSearchTerm(event.target.value);
+    setSearchLoading(true);
+  };
+
+  const displayMessages = messages => {
+    if (messages.length > 0) {
+      return messages.map(message => (
+        <Message key={message.timestamp} message={message} user={userInfo} />
+      ));
+    } else {
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -49,24 +68,49 @@ const Messages = () => {
     }
   }, [activeChannel, userInfo, messagesRef]);
 
+  useEffect(() => {
+    const channelMessages = [...messages];
+    let regex;
+    const searchResults = channelMessages.reduce((acc, message) => {
+      if (searchTerm.trim().substr(0, 5) === "user:") {
+        regex = new RegExp(
+          searchTerm
+            .trim()
+            .substring(5)
+            .trim(),
+          "gi"
+        );
+        if (message.user.name.match(regex)) {
+          acc.push(message);
+        }
+      } else {
+        regex = new RegExp(searchTerm, "gi");
+        if (message.content && message.content.match(regex)) {
+          acc.push(message);
+        }
+      }
+      return acc;
+    }, []);
+    setSearchResults(searchResults);
+    setTimeout(() => {
+      setSearchLoading(false);
+    }, 1000);
+  }, [searchTerm]);
+
   return (
     <div style={{ marginLeft: 320 }}>
       <MessagesHeader
         channelName={displayChannelName()}
         numUniqueUsers={numUniqueUsers}
+        handleSearchChange={handleSearchChange}
+        searchLoading={searchLoading}
       />
 
       <Segment>
         <Comment.Group className="messages">
-          {messages.length > 0
-            ? messages.map(message => (
-                <Message
-                  key={message.timestamp}
-                  message={message}
-                  user={userInfo}
-                />
-              ))
-            : null}
+          {searchTerm
+            ? displayMessages(searchResults)
+            : displayMessages(messages)}
         </Comment.Group>
       </Segment>
 
