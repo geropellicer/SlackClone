@@ -21,11 +21,8 @@ const Messages = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
-  
-  const [newMessages, setNewMessages] = useState([]);
-  const [messagesLoaded, setMessagesLoaded] = useState([]);
 
-  const [pageLoaded, setPageLoaded] = useState(false);
+  const [messagesLoaded, setMessagesLoaded] = useState([]);
 
   const displayChannelName = () => {
     return activeChannel ? activeChannel.name : "";
@@ -37,12 +34,16 @@ const Messages = () => {
   };
 
   const displayMessages = messages => {
-    if (messages.length > 0) {
-      return messages.map(message => (
-        <Message key={message.timestamp} message={message} user={userInfo} />
-      ));
+    if (!loadingMessages) {
+      if (messages.length > 0) {
+        return messages.map(message => (
+          <Message key={message.timestamp} message={message} user={userInfo} />
+        ));
+      } else {
+        return null;
+      }
     } else {
-      return null;
+      return <h5>loading...</h5>;
     }
   };
 
@@ -52,7 +53,6 @@ const Messages = () => {
   }, [activeChannel]);
 
   useEffect(() => {
-
     console.log("cambiando");
 
     const countUniqueUsers = () => {
@@ -68,7 +68,6 @@ const Messages = () => {
     const addMessageListener = channelId => {
       setMessagesLoaded([]);
       messagesRef.child(channelId).on("child_added", snap => {
-        console.log("nuevo hijo");
         //messagesLoaded.push(snap.val());
         setMessagesLoaded(prevMesgs => [...prevMesgs, snap.val()]);
       });
@@ -79,17 +78,16 @@ const Messages = () => {
       addMessageListener(channelId);
     };
 
-    if (activeChannel && userInfo /*&& !pageLoaded*/) {
-      console.log("superlogico");
+    if (activeChannel && userInfo) {
       addListeners(activeChannel.id);
       countUniqueUsers();
-      setPageLoaded(true);
     }
-  }, [stateActiveChannel, userInfo, messagesRef, pageLoaded]);
+    // eslint-disable-next-line
+  }, [stateActiveChannel, userInfo, messagesRef]);
 
   useEffect(() => {
     setMessages(messagesLoaded);
-  }, [messagesLoaded])
+  }, [messagesLoaded]);
 
   useEffect(() => {
     const channelMessages = [...messages];
@@ -118,6 +116,7 @@ const Messages = () => {
     setTimeout(() => {
       setSearchLoading(false);
     }, 1000);
+    // eslint-disable-next-line
   }, [searchTerm]);
 
   return (
@@ -137,7 +136,7 @@ const Messages = () => {
         </Comment.Group>
       </Segment>
 
-      <MessageForm/>
+      <MessageForm />
     </div>
   );
 };
