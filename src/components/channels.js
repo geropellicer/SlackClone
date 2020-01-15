@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Menu, Icon, Modal, Form, Input, Button } from "semantic-ui-react";
 import firebase from "../firebase";
 import { useSelector, useDispatch } from "react-redux";
-import { setCurrentChannel } from "../redux/actions";
+import { setCurrentChannel, setPrivateChannel } from "../redux/actions";
 
 const Channels = () => {
   const [channels, setChannels] = useState([]);
@@ -87,7 +87,10 @@ const Channels = () => {
     channels.map(channel => (
       <Menu.Item
         key={channel.id}
-        onClick={() => dispatch(setCurrentChannel(channel))}
+        onClick={() => {
+          dispatch(setCurrentChannel(channel));
+          dispatch(setPrivateChannel(false));
+        }}
         name={channel.name}
         style={{ opacity: 0.7 }}
         active={selectedChannel && channel.id === selectedChannel.id}

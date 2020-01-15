@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Menu, Icon } from "semantic-ui-react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import firebase from "../firebase";
+import { setCurrentChannel, setPrivateChannel } from "../redux/actions";
 
 const DirectMessages = () => {
   const [userInfo] = useState(useSelector(state => state.user.currentUser));
@@ -10,10 +11,28 @@ const DirectMessages = () => {
   const [presenceRef] = useState(firebase.database().ref("presence"));
   const [users, setUsers] = useState([]);
   const [connectedUsers, setConnectedUsers] = useState([]);
-  const [currentUserUid, setCurrentUserUid] = useState();
+
+  const dispatch = useDispatch();
 
   const isUserOnline = user => {
     return user.status === "online";
+  };
+
+  const getChannelId = userId => {
+    const currentUserUid = userInfo.uid;
+    return userId < currentUserUid
+      ? `${userId}/${currentUserUid}`
+      : `${currentUserUid}/${userId}`;
+  };
+
+  const changeChannel = user => {
+    const channelId = getChannelId(user.uid);
+    const channelData = {
+      id: channelId,
+      name: user.name
+    };
+    dispatch(setCurrentChannel(channelData));
+    dispatch(setPrivateChannel(true));
   };
 
   useEffect(() => {
@@ -41,7 +60,9 @@ const DirectMessages = () => {
         }
       });
     };
-    addListeners(userInfo.uid);
+    if (userInfo) {
+      addListeners(userInfo.uid);
+    }
   }, []);
 
   useEffect(() => {
@@ -56,21 +77,17 @@ const DirectMessages = () => {
     };
 
     presenceRef.on("child_added", snap => {
-      if (currentUserUid !== snap.key) {
+      if (userInfo.uid !== snap.key) {
         addStatusToUser(snap.key);
       }
     });
 
     presenceRef.on("child_removed", snap => {
-      if (currentUserUid !== snap.key) {
+      if (userInfo.uid !== snap.key) {
         addStatusToUser(snap.key, false);
       }
     });
   }, [users]);
-
-  useEffect(() => {
-    console.log("Users length:" + users.length);
-  });
 
   return (
     <Menu.Menu className="menu">
@@ -83,9 +100,7 @@ const DirectMessages = () => {
       {users.map(user => (
         <Menu.Item
           key={user.uid}
-          onClick={() => {
-            console.log(user);
-          }}
+          onClick={() => changeChannel(user)}
           style={{ opacity: 0.7, fontSyle: "italic" }}
         >
           <Icon name="circle" color={isUserOnline(user) ? "green" : "red"} />@
