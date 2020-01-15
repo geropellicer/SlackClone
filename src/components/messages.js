@@ -24,8 +24,22 @@ const Messages = () => {
 
   const [messagesLoaded, setMessagesLoaded] = useState([]);
 
+  const [privateMessagesRef] = useState(
+    firebase.database().ref("privateMessages")
+  );
+
+  const isPrivateChannel = useSelector(
+    state => state.channels.isPrivateChannel
+  );
+
+  const getMessagesRef = () => {
+    return isPrivateChannel ? privateMessagesRef : messagesRef;
+  };
+
   const displayChannelName = () => {
-    return activeChannel ? activeChannel.name : "";
+    return activeChannel
+      ? `${isPrivateChannel ? "@ " : "# "}${activeChannel.name}`
+      : "";
   };
 
   const handleSearchChange = event => {
@@ -48,13 +62,10 @@ const Messages = () => {
   };
 
   useEffect(() => {
-    console.log("ejecutando");
     setStateActiveChannel(activeChannel);
   }, [activeChannel]);
 
   useEffect(() => {
-    console.log("cambiando");
-
     const countUniqueUsers = () => {
       const uniqueUsers = messages.reduce((acc, message) => {
         if (!acc.includes(message.user.name)) {
@@ -67,7 +78,8 @@ const Messages = () => {
 
     const addMessageListener = channelId => {
       setMessagesLoaded([]);
-      messagesRef.child(channelId).on("child_added", snap => {
+      const ref = getMessagesRef();
+      ref.child(channelId).on("child_added", snap => {
         //messagesLoaded.push(snap.val());
         setMessagesLoaded(prevMesgs => [...prevMesgs, snap.val()]);
       });
@@ -126,6 +138,7 @@ const Messages = () => {
         numUniqueUsers={numUniqueUsers}
         handleSearchChange={handleSearchChange}
         searchLoading={searchLoading}
+        isPrivateChannel={isPrivateChannel}
       />
 
       <Segment>
@@ -136,7 +149,10 @@ const Messages = () => {
         </Comment.Group>
       </Segment>
 
-      <MessageForm />
+      <MessageForm
+        isPrivateChannel={isPrivateChannel}
+        getMessagesRef={getMessagesRef}
+      />
     </div>
   );
 };

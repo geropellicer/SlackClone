@@ -5,8 +5,7 @@ import firebase from "../firebase";
 import UploadFileModal from "./uploadFileModal";
 import uuidv4 from "uuid/v4";
 
-const MessageForm = () => {
-  const [messagesRef] = useState(firebase.database().ref("messages"));
+const MessageForm = ({isPrivateChannel, getMessagesRef}) => {
   const [storageRef] = useState(firebase.storage().ref());
 
   const [messageText, setMessageText] = useState("");
@@ -69,7 +68,7 @@ const MessageForm = () => {
   const sendMessage = () => {
     if (messageText && userInfo && activeChannel) {
       setLoading(true);
-      messagesRef
+      getMessagesRef()
         .child(activeChannel.id)
         .push()
         .set(createMessage())
@@ -103,7 +102,7 @@ const MessageForm = () => {
   };
 
   const uploadFile = async (file, metadata) => {
-    const filePath = `chat/public/${uuidv4()}.jpg`;
+    const filePath = `${getPath()}${uuidv4()}.jpg`;
 
     try {
       setUploadState("uploading");
@@ -116,8 +115,16 @@ const MessageForm = () => {
     }
   };
 
+  const getPath = () => {
+    if(isPrivateChannel){
+      return `chat/private-${activeChannel.id}`;
+    } else{
+      return 'chat/public';
+    }
+  }
+
   useEffect(() => {
-    const ref = messagesRef;
+    const ref = getMessagesRef();
     const channel = activeChannel?.id;
 
     if (uploadTask !== null && uploadState === "uploading") {
@@ -156,7 +163,7 @@ const MessageForm = () => {
 
     return () => {};
     // eslint-disable-next-line
-  }, [uploadTask, messagesRef, sendFileMessage, uploadState]);
+  }, [uploadTask, sendFileMessage, uploadState]);
 
   return (
     <Segment className="message__form">
