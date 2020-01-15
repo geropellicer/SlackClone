@@ -37,8 +37,6 @@ const DirectMessages = () => {
 
   useEffect(() => {
     const addListeners = currentUserUid => {
-      //var loadedUsers = [];
-
       usersRef.on("child_added", snap => {
         if (currentUserUid !== snap.key) {
           let user = snap.val();
@@ -63,30 +61,34 @@ const DirectMessages = () => {
     if (userInfo) {
       addListeners(userInfo.uid);
     }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
-    const addStatusToUser = (userId, connected = true) => {
-      const updatedUsers = users.reduce((acc, user) => {
-        if (user.uid === userId) {
-          user["status"] = `${connected ? "online" : "offline"}`;
+    if (userInfo) {
+      const addStatusToUser = (userId, connected = true) => {
+        const updatedUsers = users.reduce((acc, user) => {
+          if (user.uid === userId) {
+            user["status"] = `${connected ? "online" : "offline"}`;
+          }
+          return acc.concat(user);
+        }, []);
+        setConnectedUsers(updatedUsers);
+      };
+
+      presenceRef.on("child_added", snap => {
+        if (userInfo.uid !== snap.key) {
+          addStatusToUser(snap.key);
         }
-        return acc.concat(user);
-      }, []);
-      setConnectedUsers(updatedUsers);
-    };
+      });
 
-    presenceRef.on("child_added", snap => {
-      if (userInfo.uid !== snap.key) {
-        addStatusToUser(snap.key);
-      }
-    });
-
-    presenceRef.on("child_removed", snap => {
-      if (userInfo.uid !== snap.key) {
-        addStatusToUser(snap.key, false);
-      }
-    });
+      presenceRef.on("child_removed", snap => {
+        if (userInfo.uid !== snap.key) {
+          addStatusToUser(snap.key, false);
+        }
+      });
+    }
+    // eslint-disable-next-line
   }, [users]);
 
   return (
@@ -94,8 +96,9 @@ const DirectMessages = () => {
       <Menu.Item>
         <span>
           <Icon name="mail" /> DIRECT MESSAGES
-        </span>{" "}
-        ({users.length})
+        </span>
+        {"  "}
+        {/* ({users.length}) */}({connectedUsers.length})
       </Menu.Item>
       {users.map(user => (
         <Menu.Item
