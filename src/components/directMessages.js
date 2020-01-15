@@ -6,6 +6,7 @@ import { setCurrentChannel, setPrivateChannel } from "../redux/actions";
 
 const DirectMessages = () => {
   const [userInfo] = useState(useSelector(state => state.user.currentUser));
+  const isPrivateChannel = useSelector(state => state.channels.isPrivateChannel);
   const [usersRef] = useState(firebase.database().ref("users"));
   const [connectedRef] = useState(firebase.database().ref(".info/connected"));
   const [presenceRef] = useState(firebase.database().ref("presence"));
@@ -106,7 +107,7 @@ const DirectMessages = () => {
       {users.map(user => (
         <Menu.Item
           key={user.uid}
-          active={user.uid === activeChannel}
+          active={isPrivateChannel && user.uid === activeChannel}
           onClick={() => changeChannel(user)}
           style={{ opacity: 0.7, fontSyle: "italic" }}
         >
