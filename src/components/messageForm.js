@@ -155,6 +155,7 @@ const MessageForm = () => {
     }
 
     return () => {};
+    // eslint-disable-next-line
   }, [uploadTask, messagesRef, sendFileMessage, uploadState]);
 
   return (
