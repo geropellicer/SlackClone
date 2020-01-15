@@ -12,6 +12,8 @@ const DirectMessages = () => {
   const [users, setUsers] = useState([]);
   const [connectedUsers, setConnectedUsers] = useState([]);
 
+  const [activeChannel, setActiveChannel] = useState('');
+
   const dispatch = useDispatch();
 
   const isUserOnline = user => {
@@ -33,6 +35,7 @@ const DirectMessages = () => {
     };
     dispatch(setCurrentChannel(channelData));
     dispatch(setPrivateChannel(true));
+    setActiveChannel(user.uid);
   };
 
   useEffect(() => {
@@ -103,11 +106,12 @@ const DirectMessages = () => {
       {users.map(user => (
         <Menu.Item
           key={user.uid}
+          active={user.uid === activeChannel}
           onClick={() => changeChannel(user)}
           style={{ opacity: 0.7, fontSyle: "italic" }}
         >
           <Icon name="circle" color={isUserOnline(user) ? "green" : "red"} />@
-          {user.name}
+          {" " + user.name}
         </Menu.Item>
       ))}
     </Menu.Menu>
