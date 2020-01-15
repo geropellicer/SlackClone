@@ -11,8 +11,9 @@ const Messages = () => {
 
   const [userInfo] = useState(useSelector(state => state.user.currentUser));
   const activeChannel = useSelector(state => state.channels.currentChannel);
+  const [stateActiveChannel, setStateActiveChannel] = useState(activeChannel);
 
-  const [numUniqueUsers, setNumUniqueUsers] = useState("");
+  const [numUniqueUsers, setNumUniqueUsers] = useState(0);
 
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
@@ -20,6 +21,11 @@ const Messages = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  
+  const [newMessages, setNewMessages] = useState([]);
+  const [messagesLoaded, setMessagesLoaded] = useState([]);
+
+  const [pageLoaded, setPageLoaded] = useState(false);
 
   const displayChannelName = () => {
     return activeChannel ? activeChannel.name : "";
@@ -41,6 +47,14 @@ const Messages = () => {
   };
 
   useEffect(() => {
+    console.log("ejecutando");
+    setStateActiveChannel(activeChannel);
+  }, [activeChannel]);
+
+  useEffect(() => {
+
+    console.log("cambiando");
+
     const countUniqueUsers = () => {
       const uniqueUsers = messages.reduce((acc, message) => {
         if (!acc.includes(message.user.name)) {
@@ -52,21 +66,30 @@ const Messages = () => {
     };
 
     const addMessageListener = channelId => {
+      setMessagesLoaded([]);
       messagesRef.child(channelId).on("child_added", snap => {
-        setMessages(prevMessages => [...prevMessages, snap.val()]);
-        setLoadingMessages(false);
+        console.log("nuevo hijo");
+        //messagesLoaded.push(snap.val());
+        setMessagesLoaded(prevMesgs => [...prevMesgs, snap.val()]);
       });
+      setLoadingMessages(false);
     };
 
     const addListeners = channelId => {
       addMessageListener(channelId);
     };
 
-    if (activeChannel && userInfo) {
+    if (activeChannel && userInfo /*&& !pageLoaded*/) {
+      console.log("superlogico");
       addListeners(activeChannel.id);
       countUniqueUsers();
+      setPageLoaded(true);
     }
-  }, [activeChannel, userInfo, messagesRef]);
+  }, [stateActiveChannel, userInfo, messagesRef, pageLoaded]);
+
+  useEffect(() => {
+    setMessages(messagesLoaded);
+  }, [messagesLoaded])
 
   useEffect(() => {
     const channelMessages = [...messages];
@@ -114,7 +137,7 @@ const Messages = () => {
         </Comment.Group>
       </Segment>
 
-      <MessageForm />
+      <MessageForm/>
     </div>
   );
 };
