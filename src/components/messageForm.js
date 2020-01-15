@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Segment, Button, Input } from "semantic-ui-react";
 import { useSelector } from "react-redux";
 import firebase from "../firebase";
@@ -32,26 +32,30 @@ const MessageForm = ({isPrivateChannel, getMessagesRef}) => {
     setMessageText(e.target.value);
   };
 
-  const createMessage = (fileeUrl = null) => {
-    const message = {
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      user: {
-        id: userInfo.uid,
-        name: userInfo.displayName,
-        avatar: userInfo.photoURL
+  const createMessage = useCallback(
+    (fileeUrl = null) => {
+      const message = {
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        user: {
+          id: userInfo.uid,
+          name: userInfo.displayName,
+          avatar: userInfo.photoURL
+        }
+      };
+  
+      if (fileeUrl) {
+        message["image"] = fileeUrl;
+      } else {
+        message["content"] = messageText;
       }
-    };
+      return message;
+    },
+    [messageText, userInfo],
+  )
 
-    if (fileeUrl) {
-      message["image"] = fileeUrl;
-    } else {
-      message["content"] = messageText;
-    }
-    return message;
-  };
-
-  const sendFileMessage = (fileeUrl, ref, pathToUpload) => {
-    ref
+  const sendFileMessage = useCallback(
+    (fileeUrl, ref, pathToUpload) => {
+      ref
       .child(pathToUpload)
       .push()
       .set(createMessage(fileeUrl))
@@ -63,7 +67,9 @@ const MessageForm = ({isPrivateChannel, getMessagesRef}) => {
         console.log(error);
         setErrors(prevErrors => [...prevErrors, error]);
       });
-  };
+    },
+    [createMessage],
+  )
 
   const sendMessage = () => {
     if (messageText && userInfo && activeChannel) {
@@ -162,8 +168,7 @@ const MessageForm = ({isPrivateChannel, getMessagesRef}) => {
     }
 
     return () => {};
-    // eslint-disable-next-line
-  }, [uploadTask, sendFileMessage, uploadState]);
+  }, [uploadTask, sendFileMessage, uploadState, activeChannel, getMessagesRef]);
 
   return (
     <Segment className="message__form">
