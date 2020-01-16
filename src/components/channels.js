@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Menu, Icon, Modal, Form, Input, Button } from "semantic-ui-react";
+import {
+  Menu,
+  Icon,
+  Modal,
+  Form,
+  Input,
+  Button,
+  Label
+} from "semantic-ui-react";
 import firebase from "../firebase";
 import { useSelector, useDispatch } from "react-redux";
 import { setCurrentChannel, setPrivateChannel } from "../redux/actions";
@@ -16,6 +24,10 @@ const Channels = () => {
 
   const userInfo = useSelector(state => state.user.currentUser);
   const selectedChannel = useSelector(state => state.channels.currentChannel);
+
+  const [channel, setChannel] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [messagesRef] = useState(firebase.database().ref("messages"));
 
   const dispatch = useDispatch();
 
@@ -82,22 +94,87 @@ const Channels = () => {
     }
   };
 
+  const clearNotifications = () => {
+    let index = notifications.findIndex(
+      notification => notification.id === channel.id
+    );
+
+    if (index !== -1) {
+      let updatedNotifications = [...notifications];
+      updatedNotifications[index].total = notifications[index].lastKnownTotal;
+      updatedNotifications[index].count = 0;
+      setNotifications(updatedNotifications);
+    }
+  };
+
+  const changeChannel = channel => {
+    clearNotifications();
+    dispatch(setCurrentChannel(channel));
+    dispatch(setPrivateChannel(false));
+    setChannel(channel);
+  };
+
+  const getNotificationsCount = channel => {
+    let count = 0;
+
+    notifications.forEach(notification => {
+      if (notification.id === channel.id) {
+        count = notification.count;
+      }
+    });
+
+    if (count > 0) return count;
+  };
+
   const displayChannels = channels =>
     channels.length > 0 &&
     channels.map(channel => (
       <Menu.Item
         key={channel.id}
         onClick={() => {
-          dispatch(setCurrentChannel(channel));
-          dispatch(setPrivateChannel(false));
+          changeChannel(channel);
         }}
         name={channel.name}
         style={{ opacity: 0.7 }}
         active={selectedChannel && channel.id === selectedChannel.id}
       >
+        {getNotificationsCount(channel) && (
+          <Label color="red">{getNotificationsCount(channel)}</Label>
+        )}
         # {channel.name}
       </Menu.Item>
     ));
+
+  const handleNotifications = (
+    channelId,
+    currentChannelId,
+    notifications,
+    snap
+  ) => {
+    let lastTotal = 0;
+    let index = notifications.findIndex(
+      notification => notification.id === channelId
+    );
+
+    if (index !== -1) {
+      if (channelId !== currentChannelId) {
+        lastTotal = notifications[index].total;
+        if (snap.numChildren() - lastTotal > 0) {
+          notifications[index].count = snap.numChildren() - lastTotal;
+        }
+      }
+      notifications[index].lastKnownTotal = snap.numChildren();
+    } else {
+      notifications.push({
+        id: channelId,
+        total: snap.numChildren(),
+        lastKnownTotal: snap.numChildren(),
+        count: 0
+      });
+    }
+
+    setNotifications(notifications);
+  };
 
   useEffect(() => {
     const addListeners = async () => {
@@ -110,13 +187,33 @@ const Channels = () => {
     return () => {
       channelsRef.off();
     };
+    // eslint-disable-next-line
   }, [channelsRef]);
+
+  useEffect(() => {
+    const addNotificationsListener = channelId => {
+      messagesRef.child(channelId).on("value", snap => {
+        if (channel) {
+          handleNotifications(channelId, channel.id, notifications, snap);
+        }
+      });
+    };
+
+    if (channel && channelsRef) {
+      channelsRef.on("child_added", snap => {
+        addNotificationsListener(snap.key);
+      });
+    }
+
+    // eslint-disable-next-line
+  }, [channel, channelsRef]);
 
   useEffect(() => {
     const setFirstChannel = () => {
       if (channels.length > 0 && firstLoad) {
         const firstChannel = channels[0];
         dispatch(setCurrentChannel(firstChannel));
+        setChannel(firstChannel);
         setFirstLoad(false);
       }
     };
