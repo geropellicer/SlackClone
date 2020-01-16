@@ -8,6 +8,7 @@ import firebase from "../firebase";
 
 const Messages = () => {
   const [messagesRef] = useState(firebase.database().ref("messages"));
+  const [usersRef] = useState(firebase.database().ref("users"));
 
   const [userInfo] = useState(useSelector(state => state.user.currentUser));
   const activeChannel = useSelector(state => state.channels.currentChannel);
@@ -24,6 +25,9 @@ const Messages = () => {
 
   const [messagesLoaded, setMessagesLoaded] = useState([]);
 
+  const [starredChannelsIds, setStarredChannelsIds] = useState([]);
+  // const [channel, setChannel] = useState(null);
+
   const [privateMessagesRef] = useState(
     firebase.database().ref("privateMessages")
   );
@@ -31,6 +35,61 @@ const Messages = () => {
   const isPrivateChannel = useSelector(
     state => state.channels.isPrivateChannel
   );
+
+  const handleStar = channelId => {
+    let previous = starredChannelsIds;
+    if (previous.includes(channelId)) {
+      previous.splice(previous.indexOf("foo"), 1);
+      removeFromFirebaseStarred(channelId);
+    } else {
+      previous.push(channelId);
+      addToFirebaseStarred(channelId);
+    }
+    setStarredChannelsIds(previous);
+  };
+
+  const removeFromFirebaseStarred = channelId => {
+    usersRef
+      .child(`${userInfo.uid}/starred`)
+      .child(activeChannel.id)
+      .remove(err => {
+        console.error(err);
+      });
+  };
+
+  const addToFirebaseStarred = channelId => {
+    usersRef.child(`${userInfo.uid}/starred`).update({
+      [activeChannel.id]: {
+        name: activeChannel.name,
+        description: activeChannel.description,
+        createdBy: {
+          name: activeChannel.createdBy.name,
+          avatar: activeChannel.createdBy.avatar
+        }
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (usersRef && userInfo) {
+      let previous = [];
+      let object = {};
+      usersRef
+        .child(userInfo.uid)
+        .child("starred")
+        .once("value")
+        .then(data => {
+          if (data.val() !== null) {
+            object = data.val();
+            Object.keys(object).forEach(key => {
+              console.log(key);
+              previous.push(key);
+            });
+            setStarredChannelsIds(previous);
+          }
+        });
+    }
+  }, [usersRef, userInfo]);
 
   const getMessagesRef = () => {
     return isPrivateChannel ? privateMessagesRef : messagesRef;
@@ -59,6 +118,24 @@ const Messages = () => {
     } else {
       return <h5>loading...</h5>;
     }
+  };
+
+  const addUserStarsListener = (channelId, userId) => {
+    let starred = [];
+
+    usersRef
+      .child(userId)
+      .child("starred")
+      .once("value")
+      .then(data => {
+        if (data.val() !== null) {
+          const channelIds = Object.keys(data.val());
+          const prevStarred = channelIds.includes(channelId);
+          if (prevStarred) {
+            //console.log(data.key);
+          }
+        }
+      });
   };
 
   useEffect(() => {
@@ -91,8 +168,9 @@ const Messages = () => {
     };
 
     if (activeChannel && userInfo) {
-      addListeners(activeChannel.id);
       countUniqueUsers();
+      addListeners(activeChannel.id);
+      addUserStarsListener(activeChannel.id, userInfo.uid);
     }
     // eslint-disable-next-line
   }, [stateActiveChannel, userInfo, messagesRef]);
@@ -139,6 +217,9 @@ const Messages = () => {
         handleSearchChange={handleSearchChange}
         searchLoading={searchLoading}
         isPrivateChannel={isPrivateChannel}
+        handleStar={handleStar}
+        isChannelStarred={starredChannelsIds.includes(activeChannel?.id)}
+        channelId={activeChannel?.id}
       />
 
       <Segment>

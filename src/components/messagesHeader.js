@@ -6,13 +6,23 @@ const MessagesHeader = ({
   numUniqueUsers,
   handleSearchChange,
   searchLoading,
-  isPrivateChannel
+  isPrivateChannel,
+  handleStar,
+  isChannelStarred,
+  channelId
 }) => {
   return (
     <Segment clearing>
       <Header fluid="true" as="h2" floated="left" style={{ marginBottom: 0 }}>
         <span>
-          {channelName} {!isPrivateChannel ? <Icon name={"star outline"} color="black" /> : null} 
+          {channelName}{" "}
+          {!isPrivateChannel ? (
+            <Icon
+              onClick={() => {handleStar(channelId)}}
+              name={isChannelStarred ? "star" : "star outline"}
+              color={isChannelStarred ? "yellow" : "black"}
+            />
+          ) : null}
         </span>
         <Header.Subheader>{numUniqueUsers}</Header.Subheader>
       </Header>
