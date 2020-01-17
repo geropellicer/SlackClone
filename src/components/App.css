@@ -46,3 +46,10 @@ body,
 .menu{
     padding-bottom: 2em;
 }
+
+.starIcon{
+    cursor: pointer;
+}
+.starIcon:hover{
+    color: darkgoldenrod !important;
+}

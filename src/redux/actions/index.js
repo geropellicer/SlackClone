@@ -32,3 +32,21 @@ export const setPrivateChannel = isPrivate => {
         }
     }
 }
+
+export const addStarredChannel = channelId => {
+    return {
+        type: aTypes.ADD_STARRED_CHANNEL,
+        payload: {
+            starredChannel: channelId
+        }
+    }
+}
+
+export const removeStarredChannel = channelId => {
+    return {
+        type: aTypes.REMOVE_STARRED_CHANNEL,
+        payload: {
+            starredChannel: channelId
+        }
+    }
+}

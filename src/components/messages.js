@@ -3,7 +3,8 @@ import { Segment, Comment } from "semantic-ui-react";
 import MessagesHeader from "./messagesHeader";
 import MessageForm from "./messageForm";
 import Message from "./message";
-import { useSelector } from "react-redux";
+import { addStarredChannel, removeStarredChannel } from "../redux/actions";
+import { useSelector, useDispatch } from "react-redux";
 import firebase from "../firebase";
 
 const Messages = () => {
@@ -25,8 +26,9 @@ const Messages = () => {
 
   const [messagesLoaded, setMessagesLoaded] = useState([]);
 
-  const [starredChannelsIds, setStarredChannelsIds] = useState([]);
   // const [channel, setChannel] = useState(null);
+
+  const dispatch = useDispatch();
 
   const [privateMessagesRef] = useState(
     firebase.database().ref("privateMessages")
@@ -36,22 +38,24 @@ const Messages = () => {
     state => state.channels.isPrivateChannel
   );
 
+  const starredChannelsIds = useSelector(
+    state => state.channels.starredChannels
+  );
+
   const handleStar = channelId => {
-    let previous = starredChannelsIds;
-    if (previous.includes(channelId)) {
-      previous.splice(previous.indexOf("foo"), 1);
+    if (Object.values(starredChannelsIds).indexOf(channelId) > -1) {
+      dispatch(removeStarredChannel(channelId));
       removeFromFirebaseStarred(channelId);
     } else {
-      previous.push(channelId);
+      dispatch(addStarredChannel(channelId));
       addToFirebaseStarred(channelId);
-    }
-    setStarredChannelsIds(previous);
+    } 
   };
 
   const removeFromFirebaseStarred = channelId => {
     usersRef
       .child(`${userInfo.uid}/starred`)
-      .child(activeChannel.id)
+      .child(channelId)
       .remove(err => {
         console.error(err);
       });
@@ -59,7 +63,7 @@ const Messages = () => {
 
   const addToFirebaseStarred = channelId => {
     usersRef.child(`${userInfo.uid}/starred`).update({
-      [activeChannel.id]: {
+      [channelId]: {
         name: activeChannel.name,
         description: activeChannel.description,
         createdBy: {
@@ -72,7 +76,6 @@ const Messages = () => {
 
   useEffect(() => {
     if (usersRef && userInfo) {
-      let previous = [];
       let object = {};
       usersRef
         .child(userInfo.uid)
@@ -82,10 +85,8 @@ const Messages = () => {
           if (data.val() !== null) {
             object = data.val();
             Object.keys(object).forEach(key => {
-              console.log(key);
-              previous.push(key);
+              dispatch(addStarredChannel(key));
             });
-            setStarredChannelsIds(previous);
           }
         });
     }
@@ -120,9 +121,7 @@ const Messages = () => {
     }
   };
 
-  const addUserStarsListener = (channelId, userId) => {
-    let starred = [];
-
+  /* const addUserStarsListener = (channelId, userId) => {
     usersRef
       .child(userId)
       .child("starred")
@@ -130,14 +129,13 @@ const Messages = () => {
       .then(data => {
         if (data.val() !== null) {
           const channelIds = Object.keys(data.val());
-          const prevStarred = channelIds.includes(channelId);
-          if (prevStarred) {
-            //console.log(data.key);
-          }
+          channelIds.forEach(channel => {
+            dispatch()
+          });
         }
       });
   };
-
+ */
   useEffect(() => {
     setStateActiveChannel(activeChannel);
   }, [activeChannel]);
@@ -170,7 +168,6 @@ const Messages = () => {
     if (activeChannel && userInfo) {
       countUniqueUsers();
       addListeners(activeChannel.id);
-      addUserStarsListener(activeChannel.id, userInfo.uid);
     }
     // eslint-disable-next-line
   }, [stateActiveChannel, userInfo, messagesRef]);
@@ -218,7 +215,7 @@ const Messages = () => {
         searchLoading={searchLoading}
         isPrivateChannel={isPrivateChannel}
         handleStar={handleStar}
-        isChannelStarred={starredChannelsIds.includes(activeChannel?.id)}
+        starredChannelsIds={starredChannelsIds}
         channelId={activeChannel?.id}
       />
 

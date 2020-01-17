@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import { Header, Segment, Input, Icon } from "semantic-ui-react";
 
 const MessagesHeader = ({
@@ -8,9 +8,19 @@ const MessagesHeader = ({
   searchLoading,
   isPrivateChannel,
   handleStar,
-  isChannelStarred,
+  starredChannelsIds,
   channelId
 }) => {
+
+  const [isChannelStarred, setIsChannelStarred] = useState(false);
+
+  useEffect(() => {
+    setIsChannelStarred(starredChannelsIds.includes(channelId));
+    return () => {
+      //
+    };
+  }, [starredChannelsIds])
+
   return (
     <Segment clearing>
       <Header fluid="true" as="h2" floated="left" style={{ marginBottom: 0 }}>
@@ -21,6 +31,7 @@ const MessagesHeader = ({
               onClick={() => {handleStar(channelId)}}
               name={isChannelStarred ? "star" : "star outline"}
               color={isChannelStarred ? "yellow" : "black"}
+              className="starIcon"
             />
           ) : null}
         </span>

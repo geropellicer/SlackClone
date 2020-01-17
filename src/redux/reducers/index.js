@@ -2,7 +2,7 @@ import * as aTypes from "../actions/types";
 
 const initialUserState = {
   currentUser: null,
-  isLoadingUser: true,
+  isLoadingUser: true
 };
 
 export const userReducer = (state = initialUserState, action) => {
@@ -24,7 +24,8 @@ export const userReducer = (state = initialUserState, action) => {
 
 const initialChannelState = {
   currentChannel: null,
-  isPrivateChannel: false
+  isPrivateChannel: false,
+  starredChannels: []
 };
 
 export const channelsReducer = (state = initialChannelState, action) => {
@@ -35,10 +36,22 @@ export const channelsReducer = (state = initialChannelState, action) => {
         currentChannel: action.payload.currentChannel
       };
     case aTypes.SET_PRIVATE_CHANNEL:
-        return {
-            ...state,
-            isPrivateChannel: action.payload.isPrivateChannel
-        }
+      return {
+        ...state,
+        isPrivateChannel: action.payload.isPrivateChannel
+      };
+    case aTypes.ADD_STARRED_CHANNEL:
+      return {
+        ...state,
+        starredChannels: [...state.starredChannels, action.payload.starredChannel]
+      };
+    case aTypes.REMOVE_STARRED_CHANNEL:
+      let newState = [...state.starredChannels];
+      newState.splice(state.starredChannels.indexOf(action.payload.starredChannel), 1)
+      return {
+        ...state,
+        starredChannels: newState
+      };
     default:
       return state;
   }
